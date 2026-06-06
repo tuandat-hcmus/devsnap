@@ -6,8 +6,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tuandat-hcmus/devsnap/internal/app"
 	"github.com/tuandat-hcmus/devsnap/internal/domain"
-	systemScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/system"
 	gitScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/git"
+	systemScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/system"
+	vscodeScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/vscode"
 )
 
 var snapshotName string
@@ -18,6 +19,7 @@ var captureCmd = &cobra.Command{
 		scanners := []domain.Scanner{
 			systemScanner.NewScanner(),
 			gitScanner.NewScanner(),
+			vscodeScanner.NewScanner(),
 		}
 		service := app.NewCaptureService("snapshots", scanners)
 		snapshot, err := service.Capture(context.Background(), snapshotName)
