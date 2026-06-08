@@ -14,7 +14,7 @@ func NewScanner() *Scanner {
 
 func (s *Scanner) Name() string {
 	return "git"
-}	
+}
 
 func (s *Scanner) Scan(ctx context.Context) (any, error) {
 	cmd := exec.CommandContext(ctx, "git", "config", "--global", "--list")

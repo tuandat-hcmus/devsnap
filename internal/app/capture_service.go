@@ -2,11 +2,7 @@ package app
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"github.com/google/uuid"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -14,8 +10,8 @@ import (
 )
 
 type CaptureService struct {
-	SnapshotDir string
-	Scanners    []domain.Scanner
+	Storage  domain.SnapshotStorage
+	Scanners []domain.Scanner
 }
 
 type ScanResult struct {
@@ -24,10 +20,10 @@ type ScanResult struct {
 	Err  error
 }
 
-func NewCaptureService(snapshotDir string, scanners []domain.Scanner) *CaptureService {
+func NewCaptureService(storage domain.SnapshotStorage, scanners []domain.Scanner) *CaptureService {
 	return &CaptureService{
-		SnapshotDir: snapshotDir,
-		Scanners:    scanners,
+		Storage:  storage,
+		Scanners: scanners,
 	}
 }
 
@@ -42,27 +38,10 @@ func (s *CaptureService) Capture(ctx context.Context, name string) (*domain.Snap
 		CreatedAt: time.Now().UTC(),
 		Data:      data,
 	}
-	if err := s.saveSnapshot(snapshot); err != nil {
+	if err := s.Storage.Save(ctx, snapshot); err != nil {
 		return nil, err
 	}
 	return snapshot, nil
-}
-
-func (s *CaptureService) saveSnapshot(snapshot *domain.Snapshot) error {
-	if err := os.MkdirAll(s.SnapshotDir, 0755); err != nil {
-		return fmt.Errorf("failed to create snapshot directory: %w", err)
-	}
-	data, err := json.MarshalIndent(snapshot, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal snapshot: %w", err)
-	}
-
-	filePath := filepath.Join(s.SnapshotDir, snapshot.ID+".json")
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write snapshot file: %w", err)
-	}
-
-	return nil
 }
 
 func (s *CaptureService) runScanners(ctx context.Context) map[string]any {

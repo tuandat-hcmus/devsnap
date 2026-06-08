@@ -1,32 +1,27 @@
 package cli
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"github.com/spf13/cobra"
+	"github.com/tuandat-hcmus/devsnap/internal/app"
+	"github.com/tuandat-hcmus/devsnap/internal/storage/local"
 )
 
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all snapshots",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		files, err := os.ReadDir("snapshots")
+		storage := local.NewStorage("snapshots")
+		listService := app.NewListService(storage)
+		ctx := context.Background()
+		snapshots, err := listService.List(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to read snapshots directory: %w", err)
+			fmt.Println("Error listing snapshots:", err)
+			return err
 		}
-		if len(files) == 0 {
-			fmt.Println("No snapshots found.")
-			return nil
-		}
-		for _, file := range files {
-			if file.IsDir() {
-				continue
-			}
-			if filepath.Ext(file.Name()) != ".json" {
-				continue
-			}
-			fmt.Println(file.Name())
+		for _, snapshot := range snapshots {
+			fmt.Println(snapshot.ID)
 		}
 		return nil
 	},

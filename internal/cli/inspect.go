@@ -1,11 +1,12 @@
 package cli
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"github.com/spf13/cobra"
+	"github.com/tuandat-hcmus/devsnap/internal/app"
+	"github.com/tuandat-hcmus/devsnap/internal/storage/local"
 )
 
 var inspectCmd = &cobra.Command{
@@ -14,13 +15,20 @@ var inspectCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		snapshotID := args[0]
-
-		snapshotPath := filepath.Join("snapshots", snapshotID+".json")
-		data, err := os.ReadFile(snapshotPath)
+		storage := local.NewStorage("snapshots")
+		inspectService := app.NewInspectService(storage)
+		ctx := context.Background()
+		snapshot, err := inspectService.GetSnapshot(ctx, snapshotID)
 		if err != nil {
-			return fmt.Errorf("failed to read snapshot file: %w", err)
+			fmt.Println("Error inpecting snapshot")
+			return err
 		}
-		fmt.Println(string(data))
+		jsonData, err := json.MarshalIndent(snapshot, "", "  ")
+		if err != nil {
+			fmt.Println("Error marshaling snapshot to JSON")
+			return err
+		}
+		fmt.Println(string(jsonData))
 		return nil
 	},
 }

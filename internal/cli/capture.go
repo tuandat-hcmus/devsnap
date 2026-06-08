@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tuandat-hcmus/devsnap/internal/app"
 	"github.com/tuandat-hcmus/devsnap/internal/domain"
+	"github.com/tuandat-hcmus/devsnap/internal/storage/local"
 	gitScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/git"
 	systemScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/system"
 	vscodeScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/vscode"
@@ -22,7 +23,8 @@ var captureCmd = &cobra.Command{
 			gitScanner.NewScanner(),
 			vscodeScanner.NewScanner(),
 		}
-		service := app.NewCaptureService("snapshots", scanners)
+		storage := local.NewStorage("snapshots")
+		service := app.NewCaptureService(storage, scanners)
 		// Use a context with timeout to avoid hanging if any scanner takes too long
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		// Ensure that the context is canceled to free resources after the capture is done
