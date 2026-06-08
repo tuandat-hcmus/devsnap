@@ -24,6 +24,11 @@ func (s *Scanner) Name() string {
 }
 
 func (s *Scanner) Scan(ctx context.Context) (any, error) {
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	default:
+	}
 	hostname, err := os.Hostname()
 	if err != nil {
 		hostname = "unknown"

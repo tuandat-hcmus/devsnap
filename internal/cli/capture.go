@@ -9,6 +9,7 @@ import (
 	gitScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/git"
 	systemScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/system"
 	vscodeScanner "github.com/tuandat-hcmus/devsnap/internal/scanners/vscode"
+	"time"
 )
 
 var snapshotName string
@@ -22,7 +23,12 @@ var captureCmd = &cobra.Command{
 			vscodeScanner.NewScanner(),
 		}
 		service := app.NewCaptureService("snapshots", scanners)
-		snapshot, err := service.Capture(context.Background(), snapshotName)
+		// Use a context with timeout to avoid hanging if any scanner takes too long
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// Ensure that the context is canceled to free resources after the capture is done
+		defer cancel()
+
+		snapshot, err := service.Capture(ctx, snapshotName)
 		if err != nil {
 			fmt.Println("Error capturing snapshot:", err)
 			return err
